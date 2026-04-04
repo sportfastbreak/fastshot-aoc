@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FastShot — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,800;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #00E676;
+    --dark: #0A0D0F;
+    --surface: #181D22;
+    --surface2: #1E252D;
+    --surface3: #242C35;
+    --border: rgba(255,255,255,0.07);
+    --text: #F0F4F8;
+    --muted: #6B7A8D;
+    --red: #FF5252;
+    --gold: #FFD740;
+    --blue: #448AFF;
+    --radius: 16px;
+  }
+  body { background: var(--dark); color: var(--text); font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+
+  /* ═══ LOGIN ═══ */
+  #view-login {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,230,118,0.1) 0%, transparent 60%);
+  }
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 36px;
+    width: 100%; max-width: 380px;
+    text-align: center;
+  }
+  .login-logo { font-size: 32px; margin-bottom: 6px; }
+  .login-brand {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 28px; text-transform: uppercase;
+    letter-spacing: -0.3px; margin-bottom: 4px;
+  }
+  .login-brand em { color: var(--green); font-style: normal; }
+  .login-sub { font-size: 12px; color: var(--muted); margin-bottom: 32px; }
+  .input-wrap { position: relative; margin-bottom: 14px; }
+  .input-wrap input {
+    width: 100%; padding: 16px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px;
+    outline: none; transition: border-color 0.2s;
+    text-align: center; letter-spacing: 3px;
+  }
+  .input-wrap input:focus { border-color: rgba(0,230,118,0.4); }
+  .input-wrap input::placeholder { letter-spacing: 0; color: var(--muted); }
+  .login-btn {
+    width: 100%; padding: 16px;
+    background: var(--green); border: none; border-radius: 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 17px; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #000;
+    cursor: pointer; transition: transform 0.15s;
+    box-shadow: 0 6px 24px rgba(0,230,118,0.25);
+  }
+  .login-btn:active { transform: scale(0.97); }
+  .login-error { font-size: 12px; color: var(--red); margin-top: 12px; display: none; }
+
+  /* ═══ LAYOUT ═══ */
+  #view-admin { display: none; min-height: 100vh; }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(10,13,15,0.9);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-brand { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 20px; text-transform: uppercase; }
+  .topbar-brand em { color: var(--green); font-style: normal; }
+  .topbar-sep { width: 1px; height: 20px; background: var(--border); }
+  .topbar-event { font-size: 13px; color: var(--muted); }
+  .topbar-event strong { color: var(--text); }
+
+  .logout-btn { background: none; border: 1px solid var(--border); border-radius: 10px; padding: 6px 14px; font-size: 12px; color: var(--muted); cursor: pointer; }
+  .logout-btn:hover { color: var(--red); border-color: var(--red); }
+
+  /* ═══ STATS BAR ═══ */
+  .stats-bar {
+    padding: 20px 28px;
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 18px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .stat-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; line-height: 1; }
+  .stat-num.green { color: var(--green); }
+  .stat-num.gold  { color: var(--gold); }
+  .stat-num.red   { color: var(--red); }
+  .stat-num.blue  { color: var(--blue); }
+  .stat-label { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .stat-label strong { display: block; color: var(--text); font-size: 13px; }
+
+  /* ═══ FILTER TABS ═══ */
+  .filter-bar {
+    padding: 0 28px 20px;
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .filter-tab {
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted); font-size: 13px; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .filter-tab.active { background: var(--green); border-color: var(--green); color: #000; font-weight: 500; }
+  .filter-tab:not(.active):hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+  /* ═══ PHOTO GRID ═══ */
+  .grid-container { padding: 0 28px 60px; }
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .photo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: transform 0.15s, border-color 0.2s;
+  }
+  .photo-card:hover { transform: translateY(-2px); }
+  .photo-card.status-approved { border-color: rgba(0,230,118,0.3); }
+  .photo-card.status-rejected { border-color: rgba(255,82,82,0.2); opacity: 0.6; }
+  .photo-card.status-winner  { border-color: var(--gold); box-shadow: 0 0 32px rgba(255,215,64,0.12); }
+
+  .photo-thumb {
+    position: relative;
+    width: 100%; height: 200px;
+    overflow: hidden; background: var(--surface2);
+  }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-thumb .status-badge {
+    position: absolute; top: 10px; right: 10px;
+    border-radius: 20px; padding: 4px 10px;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.5px;
+    backdrop-filter: blur(8px);
+  }
+  .badge-pending  { background: rgba(10,13,15,0.7); border: 1px solid var(--border); color: var(--muted); }
+  .badge-approved { background: rgba(0,230,118,0.15); border: 1px solid rgba(0,230,118,0.3); color: var(--green); }
+  .badge-rejected { background: rgba(255,82,82,0.15); border: 1px solid rgba(255,82,82,0.3); color: var(--red); }
+  .badge-winner   { background: rgba(255,215,64,0.2); border: 1px solid rgba(255,215,64,0.4); color: var(--gold); }
+
+  .winner-crown {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px;
+    background: rgba(10,13,15,0.5);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .photo-card.status-winner .winner-crown { opacity: 1; }
+
+  .photo-meta {
+    padding: 14px 16px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .photo-info {}
+  .photo-time { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+  .photo-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; text-transform: uppercase; color: var(--text); }
+
+  .photo-actions { display: flex; gap: 8px; }
+  .action-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .action-btn:hover { transform: scale(1.08); }
+  .action-btn.approve:hover { background: rgba(0,230,118,0.1); border-color: rgba(0,230,118,0.3); }
+  .action-btn.reject:hover  { background: rgba(255,82,82,0.1);  border-color: rgba(255,82,82,0.3); }
+  .action-btn.winner:hover  { background: rgba(255,215,64,0.1); border-color: rgba(255,215,64,0.3); }
+  .action-btn.active-approve { background: rgba(0,230,118,0.12); border-color: rgba(0,230,118,0.4); }
+  .action-btn.active-winner  { background: rgba(255,215,64,0.12); border-color: rgba(255,215,64,0.5); }
+  .action-btn.active-reject  { background: rgba(255,82,82,0.12); border-color: rgba(255,82,82,0.4); opacity: 0.6; }
+
+  /* ═══ WINNER BANNER ═══ */
+  .winner-banner {
+    margin: 0 28px 20px;
+    background: linear-gradient(135deg, rgba(255,215,64,0.1) 0%, rgba(255,215,64,0.04) 100%);
+    border: 1px solid rgba(255,215,64,0.3);
+    border-radius: 18px;
+    padding: 20px 24px;
+    display: none;
+    align-items: center;
+    gap: 18px;
+  }
+  .winner-banner.visible { display: flex; }
+  .winner-trophy { font-size: 36px; flex-shrink: 0; }
+  .winner-info {}
+  .winner-label { font-size: 10px; color: var(--gold); font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+  .winner-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 22px; text-transform: uppercase; color: var(--text); margin-bottom: 2px; }
+  .winner-desc { font-size: 12px; color: var(--muted); }
+  .winner-clear { margin-left: auto; background: none; border: 1px solid rgba(255,215,64,0.2); border-radius: 8px; padding: 6px 12px; color: var(--muted); font-size: 11px; cursor: pointer; flex-shrink: 0; }
+  .winner-clear:hover { color: var(--red); border-color: rgba(255,82,82,0.3); }
+
+  /* ═══ EMPTY ═══ */
+  .empty-state { text-align: center; padding: 60px 28px; color: var(--muted); }
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  /* ═══ TOAST ═══ */
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 20px; font-size: 13px; color: var(--text); z-index: 999; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; white-space: nowrap; }
+  .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.green { border-color: rgba(0,230,118,0.4); }
+  .toast.gold  { border-color: rgba(255,215,64,0.4); }
+  .toast.red   { border-color: rgba(255,82,82,0.4); }
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="view-login">
+  <div class="login-card">
+    <div class="login-logo">⚡</div>
+    <div class="login-brand">Fast<em>Shot</em></div>
+    <div class="login-sub">Interface de modération · Réservé au club</div>
+    <div class="input-wrap">
+      <input type="password" id="passwordInput" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')tryLogin()">
+    </div>
+    <button class="login-btn" onclick="tryLogin()">Accéder →</button>
+    <div class="login-error" id="loginError">Mot de passe incorrect</div>
+  </div>
+</div>
+
+<!-- ══ ADMIN ══ -->
+<div id="view-admin">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-brand">Fast<em>Shot</em> Admin</div>
+      <div class="topbar-sep"></div>
+      <div class="topbar-event">Match <strong id="eventLabel">AOC vs FC Muret</strong></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Déconnexion</button>
+  </div>
+
+  <div class="stats-bar" id="statsBar"></div>
+
+  <div class="winner-banner" id="winnerBanner">
+    <div class="winner-trophy">🏆</div>
+    <div class="winner-info">
+      <div class="winner-label">Photo du match</div>
+      <div class="winner-title" id="winnerTitle">—</div>
+      <div class="winner-desc" id="winnerDesc">Soumise à 14h38</div>
+    </div>
+    <button class="winner-clear" onclick="clearWinner()">✕ Retirer</button>
+  </div>
+
+  <div class="filter-bar" id="filterBar"></div>
+  <div class="grid-container">
+    <div class="photo-grid" id="photoGrid"></div>
+    <div class="empty-state hidden" id="emptyState">
+      <div class="empty-icon">📭</div>
+      <p>Aucune photo dans cette catégorie.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── CONFIG
+  const ADMIN_PASSWORD = 'fastbreak2025'; // ← à changer avant production
+
+  // ── MOCK DATA (remplacé par Cloudinary à l'étape suivante)
+  const MOCK_PHOTOS = [
+    { id: 1,  file: 'IMG_3842.jpg', time: '14h12', thumb: 'https://picsum.photos/seed/foot1/400/280',  status: 'pending' },
+    { id: 2,  file: 'IMG_3901.jpg', time: '14h21', thumb: 'https://picsum.photos/seed/foot2/400/280',  status: 'pending' },
+    { id: 3,  file: 'IMG_3917.jpg', time: '14h29', thumb: 'https://picsum.photos/seed/foot3/400/280',  status: 'pending' },
+    { id: 4,  file: 'IMG_3955.jpg', time: '14h38', thumb: 'https://picsum.photos/seed/sport4/400/280', status: 'pending' },
+    { id: 5,  file: 'IMG_4012.jpg', time: '14h51', thumb: 'https://picsum.photos/seed/sport5/400/280', status: 'pending' },
+    { id: 6,  file: 'IMG_4078.jpg', time: '15h03', thumb: 'https://picsum.photos/seed/game6/400/280',  status: 'pending' },
+    { id: 7,  file: 'IMG_4134.jpg', time: '15h17', thumb: 'https://picsum.photos/seed/game7/400/280',  status: 'pending' },
+    { id: 8,  file: 'IMG_4200.jpg', time: '15h29', thumb: 'https://picsum.photos/seed/game8/400/280',  status: 'pending' },
+    { id: 9,  file: 'IMG_4267.jpg', time: '15h44', thumb: 'https://picsum.photos/seed/pitch9/400/280', status: 'pending' },
+    { id: 10, file: 'IMG_4310.jpg', time: '15h58', thumb: 'https://picsum.photos/seed/pitch10/400/280',status: 'pending' },
+    { id: 11, file: 'IMG_4389.jpg', time: '16h07', thumb: 'https://picsum.photos/seed/crowd11/400/280',status: 'pending' },
+    { id: 12, file: 'IMG_4451.jpg', time: '16h22', thumb: 'https://picsum.photos/seed/crowd12/400/280',status: 'pending' },
+  ];
+
+  // ── STATE
+  let photos = MOCK_PHOTOS.map(p => ({...p}));
+  let currentFilter = 'all';
+  let toastTimer;
+
+  // ── AUTH
+  function tryLogin() {
+    const val = document.getElementById('passwordInput').value;
+    if (val === ADMIN_PASSWORD) {
+      document.getElementById('view-login').style.display = 'none';
+      document.getElementById('view-admin').style.display = 'block';
+      renderAll();
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('passwordInput').value = '';
+    }
+  }
+
+  function logout() {
+    document.getElementById('view-login').style.display = 'flex';
+    document.getElementById('view-admin').style.display = 'none';
+    document.getElementById('passwordInput').value = '';
+  }
+
+  // ── ACTIONS
+  function approvePhoto(id) {
+    const p = photos.find(x => x.id === id);
+    if (!p) return;
+    if (p.status === 'approved') {
+      p.status = 'pending';
+      showToast('↩ Photo remise en attente', '');
+    } else {
+      if (p.status === 'winner') clearWinnerById(id, false);
+      p.status = 'approved';
+      showToast('✅ Photo approuvée', 'green');
+    }
+    renderAll();
+  }
+
+  function rejectPhoto(id) {
+    const p = photos.find(x => x.id === id);
+    if (!p) return;
+    if (p.status === 'rejected') {
+      p.status = 'pending';
+      showToast('↩ Photo remise en attente', '');
+    } else {
+      if (p.status === 'winner') clearWinnerById(id, false);
+      p.status = 'rejected';
+      showToast('❌ Photo rejetée', 'red');
+    }
+    renderAll();
+  }
+
+  function setWinner(id) {
+    const p = photos.find(x => x.id === id);
+    if (!p) return;
+    if (p.status === 'winner') {
+      clearWinnerById(id, true);
+      return;
+    }
+    // Remove previous winner
+    photos.forEach(x => { if (x.status === 'winner') x.status = 'approved'; });
+    p.status = 'winner';
+    showToast('🏆 Photo du match élue !', 'gold');
+    renderAll();
+  }
+
+  function clearWinner() {
+    const w = photos.find(x => x.status === 'winner');
+    if (w) { w.status = 'approved'; }
+    renderAll();
+  }
+
+  function clearWinnerById(id, toast) {
+    const p = photos.find(x => x.id === id);
+    if (p) p.status = 'approved';
+    if (toast) { showToast('↩ Vainqueur retiré', ''); renderAll(); }
+  }
+
+  // ── RENDER
+  function getFiltered() {
+    if (currentFilter === 'all')      return photos;
+    if (currentFilter === 'pending')  return photos.filter(p => p.status === 'pending');
+    if (currentFilter === 'approved') return photos.filter(p => p.status === 'approved' || p.status === 'winner');
+    if (currentFilter === 'rejected') return photos.filter(p => p.status === 'rejected');
+    if (currentFilter === 'winner')   return photos.filter(p => p.status === 'winner');
+    return photos;
+  }
+
+  function renderStats() {
+    const total    = photos.length;
+    const pending  = photos.filter(p => p.status === 'pending').length;
+    const approved = photos.filter(p => p.status === 'approved' || p.status === 'winner').length;
+    const rejected = photos.filter(p => p.status === 'rejected').length;
+    const winner   = photos.filter(p => p.status === 'winner').length;
+
+    document.getElementById('statsBar').innerHTML = `
+      <div class="stat-pill">
+        <div class="stat-num blue">${total}</div>
+        <div class="stat-label"><strong>Photos reçues</strong>total</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-num" style="color:var(--muted)">${pending}</div>
+        <div class="stat-label"><strong>En attente</strong>à modérer</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-num green">${approved}</div>
+        <div class="stat-label"><strong>Approuvées</strong>publiables</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-num red">${rejected}</div>
+        <div class="stat-label"><strong>Rejetées</strong>masquées</div>
+      </div>
+      ${winner ? `<div class="stat-pill" style="border-color:rgba(255,215,64,0.25)">
+        <div class="stat-num gold">🏆</div>
+        <div class="stat-label"><strong>Vainqueur</strong>élu</div>
+      </div>` : ''}
+    `;
+  }
+
+  function renderFilters() {
+    const counts = {
+      all:      photos.length,
+      pending:  photos.filter(p => p.status === 'pending').length,
+      approved: photos.filter(p => p.status === 'approved' || p.status === 'winner').length,
+      rejected: photos.filter(p => p.status === 'rejected').length,
+      winner:   photos.filter(p => p.status === 'winner').length,
+    };
+    const tabs = [
+      { key: 'all',      label: `Toutes (${counts.all})` },
+      { key: 'pending',  label: `À modérer (${counts.pending})` },
+      { key: 'approved', label: `Approuvées (${counts.approved})` },
+      { key: 'rejected', label: `Rejetées (${counts.rejected})` },
+      { key: 'winner',   label: `🏆 Vainqueur` },
+    ];
+    document.getElementById('filterBar').innerHTML = tabs.map(t =>
+      `<button class="filter-tab ${currentFilter===t.key?'active':''}" onclick="setFilter('${t.key}')">${t.label}</button>`
+    ).join('');
+  }
+
+  function renderWinnerBanner() {
+    const w = photos.find(p => p.status === 'winner');
+    const banner = document.getElementById('winnerBanner');
+    if (w) {
+      banner.classList.add('visible');
+      document.getElementById('winnerTitle').textContent = w.file;
+      document.getElementById('winnerDesc').textContent = `Soumise à ${w.time}`;
+    } else {
+      banner.classList.remove('visible');
+    }
+  }
+
+  function statusBadgeHtml(status) {
+    const map = {
+      pending:  ['badge-pending',  'En attente'],
+      approved: ['badge-approved', '✓ Approuvée'],
+      rejected: ['badge-rejected', '✕ Rejetée'],
+      winner:   ['badge-winner',   '🏆 Photo du match'],
+    };
+    const [cls, label] = map[status] || map.pending;
+    return `<div class="status-badge ${cls}">${label}</div>`;
+  }
+
+  function renderGrid() {
+    const list = getFiltered();
+    const grid = document.getElementById('photoGrid');
+    const empty = document.getElementById('emptyState');
+
+    if (!list.length) {
+      grid.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    grid.innerHTML = list.map(p => `
+      <div class="photo-card status-${p.status}" id="card-${p.id}">
+        <div class="photo-thumb">
+          <img src="${p.thumb}" alt="${p.file}" loading="lazy">
+          ${statusBadgeHtml(p.status)}
+          ${p.status === 'winner' ? '<div class="winner-crown">🏆</div>' : ''}
+        </div>
+        <div class="photo-meta">
+          <div class="photo-info">
+            <div class="photo-time">Aujourd'hui · ${p.time}</div>
+            <div class="photo-name">${p.file}</div>
+          </div>
+          <div class="photo-actions">
+            <button class="action-btn approve ${p.status==='approved'||p.status==='winner'?'active-approve':''}" onclick="approvePhoto(${p.id})" title="Approuver">✓</button>
+            <button class="action-btn winner ${p.status==='winner'?'active-winner':''}" onclick="setWinner(${p.id})" title="Élire photo du match">🏆</button>
+            <button class="action-btn reject ${p.status==='rejected'?'active-reject':''}" onclick="rejectPhoto(${p.id})" title="Rejeter">✕</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderAll() {
+    renderStats();
+    renderFilters();
+    renderWinnerBanner();
+    renderGrid();
+  }
+
+  function setFilter(key) {
+    currentFilter = key;
+    renderAll();
+  }
+
+  // ── TOAST
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast visible' + (type ? ' ' + type : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('visible'), 2500);
+  }
+</script>
+</body>
+</html>
