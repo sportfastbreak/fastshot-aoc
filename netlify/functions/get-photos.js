@@ -6,10 +6,7 @@ exports.handler = async function(event, context) {
   const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
   if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Missing Cloudinary credentials' })
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Missing Cloudinary credentials' }) };
   }
 
   try {
@@ -54,32 +51,47 @@ exports.handler = async function(event, context) {
 
     const resources = data.resources || [];
 
-    const photos = resources.map(resource => ({
-      id:       resource.public_id,
-      url:      resource.secure_url,
-      thumb:    resource.secure_url.replace('/upload/', '/upload/w_400,h_280,c_fill/'),
-      filename: resource.public_id.split('/').pop(),
-      time:     new Date(resource.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      date:     new Date(resource.created_at).toLocaleDateString('fr-FR'),
-      bytes:    resource.bytes,
-      tags:     resource.tags || [],
-    }));
+    const photos = resources.map(resource => {
+      // Parse Cloudinary context: "prenom=Jean|nom=Dupont|email=jean@x.com|newsletter=oui|match=AOC vs FC Muret"
+      const ctx = resource.context?.custom || {};
+      const prenom     = ctx.prenom     || '';
+      const nom        = ctx.nom        || '';
+      const email      = ctx.email      || '';
+      const newsletter = ctx.newsletter || 'non';
+      const match      = ctx.match      || '';
 
-    photos.sort((a, b) => new Date(b.date) - new Date(a.date));
+      const fullName = prenom && nom ? `${prenom} ${nom}` : (prenom || nom || '');
+
+      return {
+        id:          resource.public_id,
+        url:         resource.secure_url,
+        thumb:       resource.secure_url.replace('/upload/', '/upload/w_400,h_280,c_fill/'),
+        filename:    resource.public_id.split('/').pop(),
+        time:        new Date(resource.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        date:        new Date(resource.created_at).toLocaleDateString('fr-FR'),
+        created_at:  resource.created_at,
+        bytes:       resource.bytes,
+        tags:        resource.tags || [],
+        // Participant data
+        prenom,
+        nom,
+        fullName,
+        email,
+        newsletter,
+        match,
+      };
+    });
+
+    // Sort newest first
+    photos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ photos, total: photos.length })
     };
 
   } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message })
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };
