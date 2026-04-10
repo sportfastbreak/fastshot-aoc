@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>FastShot — Partagez vos moments</title>
+<script src="config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,800;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -513,11 +514,12 @@
 
 </div>
 <script>
-  const MAX_GALLERY   = 5;
-  const MAX_SESSIONS  = 3;
+  const CFG           = window.FASTSHOT_CONFIG || {};
+  const MAX_GALLERY   = CFG.limites?.photosParEnvoi  || 5;
+  const MAX_SESSIONS  = CFG.limites?.sessionsParJour || 3;
   const STORAGE_KEY   = 'fastshot_v6_sessions';
-  const CLOUD_NAME    = 'dpeht8mwy';
-  const UPLOAD_PRESET = 'Fastshot preset';
+  const CLOUD_NAME    = CFG.cloudinary?.cloudName    || 'dpeht8mwy';
+  const UPLOAD_PRESET = CFG.cloudinary?.uploadPreset || 'Fastshot preset';
   const UPLOAD_URL    = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
   // ── STATE
@@ -770,3 +772,51 @@
 </script>
 </body>
 </html>
+<script>
+// ── INJECT CONFIG INTO DOM
+document.addEventListener('DOMContentLoaded', () => {
+  const C = window.FASTSHOT_CONFIG;
+  if (!C) return;
+
+  // Club badges
+  document.querySelectorAll('.badge-circle').forEach(el => el.textContent = C.club.short);
+  document.querySelectorAll('.club-name').forEach(el => {
+    el.innerHTML = `${C.club.nom} <span>${C.club.ville}</span>`;
+  });
+
+  // Match chip
+  document.querySelectorAll('.match-teams').forEach(el => {
+    el.innerHTML = `${C.match.domicile} <span>vs</span> ${C.match.exterieur}`;
+  });
+  document.querySelectorAll('.match-meta').forEach(el => {
+    el.innerHTML = `${C.match.date}<br>${C.match.heure}`;
+  });
+  document.querySelectorAll('[class*="competition"]').forEach(el => {
+    el.textContent = C.match.competition;
+  });
+
+  // Récompense
+  document.querySelectorAll('.reward-value').forEach(el => el.textContent = C.concours.recompense);
+  document.querySelectorAll('.cb-sub strong').forEach(el => el.textContent = C.concours.recompense);
+
+  // Concours actif ou pas
+  if (!C.concours.actif) {
+    document.querySelectorAll('.contest-badge, .trophy-wrap, .reward-card, .contest-banner, .contest-hint, .steps').forEach(el => {
+      if (el) el.style.display = 'none';
+    });
+  }
+
+  // Consent text
+  document.querySelectorAll('.consent-text strong').forEach(el => el.textContent = C.club.nom);
+  document.querySelectorAll('.optin-text').forEach(el => {
+    el.innerHTML = `<div class="optin-badge">✉️ Optionnel</div>J'accepte de recevoir les <strong>actualités et offres exclusives</strong> de ${C.club.nom} par email.`;
+  });
+
+  // Success sub
+  const successSub = document.getElementById('successSub');
+  if (successSub) successSub.textContent = `Vos photos ont bien été transmises au club. Merci pour votre contribution !`;
+
+  // Match context tag in upload
+  window._matchLabel = `${C.match.domicile} vs ${C.match.exterieur}`;
+});
+</script>
